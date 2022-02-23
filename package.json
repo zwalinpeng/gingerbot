@@ -11,6 +11,7 @@
   "dependencies": {
     "cookies.js": "^2.1.15",
     "discord.js": "^13.6.0",
-    "dotenv": "^16.0.0"
+    "dotenv": "^16.0.0",
+    "mongoose": "^6.2.3"
   }
 }

@@ -1,5 +1,6 @@
 const Discord = require('discord.js');
 require('dotenv').config();
+const mongoose = require('mongoose');
 
 const client = new Discord.Client({
     intents: [
@@ -11,8 +12,8 @@ const client = new Discord.Client({
 
 let bot = {
     client,
-    prefix: process.env.prefix,
-    owners: [process.env.dinkyId]
+    prefix: process.env.PREFIX,
+    owners: [process.env.MY_ID]
 };
 
 client.commands = new Discord.Collection();
@@ -29,5 +30,10 @@ module.exports = bot;
 // client.on("ready", () => {
 //     console.log(`Logged in as ${client.user.tag}`)
 // })
+
+mongoose.connect('mongodb://localhost/gingerdb', () => {
+    console.log('Connected to MongoDB');
+}, err => console.log(err)
+);
 
 client.login(process.env.TOKEN);

@@ -1,6 +1,6 @@
 const Discord = require('discord.js');
 const { MessageAttachment, MessageEmbed } = require('discord.js');
-const ck = require(process.env.dir + '/cookies.js');
+const ck = require(process.env.DIR + '/cookies.js');
 const fs = require('fs');
 
 module.exports = {
@@ -9,6 +9,7 @@ module.exports = {
     permissions: [],
     devOnly: false,
     run: async ({bot, message, args}) => {
+        //TODO: check for sufficient crystals
         cut(message)
     }
 };

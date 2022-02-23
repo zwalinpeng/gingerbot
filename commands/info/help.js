@@ -15,7 +15,7 @@ function help(message){
         .setColor('#f0ab22')
         .setTitle('GingerBot')
         .addFields(
-            { name: 'Gacha', value: '`!cut`: Summon one time' }
+            { name: 'Gacha', value: '`!cut`: Summon one time\n`!daily`: Claim daily rewards' },
         );
     
         message.reply({ embeds: [embed] });
