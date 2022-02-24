@@ -1,6 +1,6 @@
 const Discord = require('discord.js');
 require('dotenv').config();
-const mongoose = require('mongoose');
+const mongoose = require('mongoose'); 
 
 const client = new Discord.Client({
     intents: [
