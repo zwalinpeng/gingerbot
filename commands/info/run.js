@@ -14,16 +14,13 @@ module.exports = {
 async function start(message){
     //TODO: create start message, init user, start w/ 3000 crystals, check if user already has data
     let embed = new MessageEmbed().setColor('#f0ab22');
-    var user;
-    try{
-        user = await User.find({ userId: `${message.author.id}`});
-        console.log(user);
-    } catch (e) {
-        console.log(e);
-    }
-    if (user.length == 0){ //TODO: check if user exists in db
+    var user = await User.findUser(message.author.id)
+        .catch(err => {
+            console.log(err);
+        });
+    if (user === null){ //TODO: check if user exists in db
         try {
-            let user = await User.create({
+            let user = await User.user.create({
                 userId: `${message.author.id}`,
                 pulls: 0,
                 lastCookie: 0,
@@ -40,7 +37,7 @@ async function start(message){
          .setDescription('You got :gem: x3000! Use `!cut` or `!cut10` to summon your first cookie!');
          message.reply({embeds: [embed]});
     }
-    else if (user.length == 1){
+    else {
          embed.setTitle(`Welcome back ${message.author.username}!`)
          .setDescription('Your kingdom already exists!');
          message.reply({embeds: [embed]});

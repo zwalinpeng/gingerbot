@@ -10,4 +10,22 @@ const userSchema = new mongoose.Schema({
     //TODO: cookies
 });
 
-module.exports = mongoose.model("User", userSchema);
+module.exports = {
+    user: mongoose.model('User', userSchema),
+    findUser: async function(userId){
+        var user;
+        try{
+            user = await mongoose.model('User', userSchema).find({ userId: userId });
+        } catch (err) {
+            console.log(err);
+        }
+        if (user.length == 0){
+            console.log('no such user')
+            return null;
+        }
+        else {
+            console.log('user found');
+            return user[0];
+        }
+    }
+};

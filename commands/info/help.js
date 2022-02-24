@@ -19,6 +19,5 @@ function help(message){
             { name: 'Welcome!', value: 'Use `!run` to start your kingdom!'},
             { name: 'Gacha', value: '`!cut`: Summon one time\n`!daily`: Claim daily rewards' },
         );
-    
         message.reply({ embeds: [embed] });
 }
