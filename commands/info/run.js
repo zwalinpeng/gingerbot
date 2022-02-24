@@ -22,11 +22,11 @@ async function start(message){
         try {
             let user = await User.user.create({
                 userId: `${message.author.id}`,
+                crystals: 3000,
                 pulls: 0,
                 lastCookie: 0,
                 lastEpic: 0,
                 daily: false,
-                crystals: 3000
             });
             await user.save();
             console.log(`${message.author.username} data created`);

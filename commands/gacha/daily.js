@@ -38,8 +38,10 @@ async function daily(message){
         }
         else { //user has not logged in
             try {
-                await User.user.updateOne( { userId: message.author.id }, { $set: { daily: true }});
-                //await User.user.save();
+                let u = await User.user.find( { userId: message.author.id }, { crystals: 1 });
+                var crys = u[0].crystals;
+                console.log(crys);
+                await User.user.updateOne( { userId: message.author.id }, { $set: { daily: true, crystals: crys + 300 }});
                 console.log('user checked in');
             } catch (err){
                 console.log(err);
