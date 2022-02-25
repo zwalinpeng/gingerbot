@@ -1,7 +1,7 @@
 const Discord = require('discord.js');
 const { MessageAttachment, MessageEmbed } = require('discord.js');
-const ck = require(process.env.DIR + '/cookies.js');
-const fs = require('fs');
+const ck = require(process.env.DIR + '/cookie.js');
+const User = require(process.env.DIR + '/user.js');
 
 module.exports = {
     name: 'cut',
@@ -9,14 +9,28 @@ module.exports = {
     permissions: [],
     devOnly: false,
     run: async ({bot, message, args}) => {
-        //TODO: check for sufficient crystals
-        cut(message)
+        //check for sufficient crystals
+        let user = await User.user.find({ userId: message.author.id }, { crystals: 1, pulls: 1 });
+        if (user[0].crystals < 300){
+            let embed = new MessageEmbed()
+                .setColor('#f0ab22')
+                .setTitle(`Sorry, ${message.author.username} ...`)
+                .setDescription(`:gem: ${user[0].crystals} is not enough to summon`);
+            message.reply({ embeds: [embed] });
+        }
+        else {
+            await User.user.updateOne({ userId: message.author.id }, { $set: {
+                crystals: user[0].crystals - 300,
+                pulls: user[0].pulls + 1
+            }});
+            cut(message);
+        }
     }
 };
 
 
-function cut(message){
-    const embed = new MessageEmbed();
+async function cut(message){
+    var embed = new MessageEmbed();
     let rng = Math.random()*100;//Math.random()*100;
     let cookie;
     let ss;
@@ -50,17 +64,24 @@ function cut(message){
         let c = Math.round(Math.random()*(ck.ancient.length - 1)); //index of cookie
         cookie = ck.ancient[c];
     }
-
     if (ss){
         let count = Math.round(Math.random()*2) + 1;
         if (rng >= rates.legendary) { count = 1; }
-        embed.setTitle(`${cookie.name} Soulstone x${count}`);
-        embed.setImage(cookie.ss);
+        let pull = await ck.cookie.find({ id: cookie }, { name: 1, ss: 1 }).catch(err => {
+            console.log(err);
+        });
+        console.log(pull);
+        embed.setTitle(`${pull[0].name} Soulstone x${count}`);
+        embed.setImage(pull[0].ss);
     } 
     else {
-        embed.setTitle(`${cookie.name}`);
-        embed.setDescription(cookie.phrase);
-        embed.setImage(cookie.pull);
+        let pull = await ck.cookie.find({ id: cookie }, { name: 1, pull: 1, phrase: 1 }).catch(err => {
+            console.log(err);
+        });
+        console.log(pull);
+        embed.setTitle(pull[0].name);
+        embed.setDescription(pull[0].phrase);
+        embed.setImage(pull[0].pull);
     }
     message.reply({ embeds: [embed] });
 }

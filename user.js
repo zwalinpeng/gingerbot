@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema({
     pulls: Number,
     lastCookie: Number,
     lastEpic: Number,
-    daily: Boolean,
+    daily: Boolean
     //TODO: cookies
 });
 

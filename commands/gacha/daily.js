@@ -12,7 +12,6 @@ module.exports = {
 };
 
 async function daily(message){
-    //TODO: check if already logged-in
     let user = await User.findUser(message.author.id)
         .catch(err => {
             console.log(err);
@@ -23,7 +22,7 @@ async function daily(message){
     else {
         var logged = false;
         try {
-            let u = await User.user.find( { userId: message.author.id }, { daily : 1 } );
+            let u = await User.user.find({ userId: message.author.id }, { daily : 1 });
             logged = u[0].daily;
         } catch (err){
             console.log(err);
@@ -38,10 +37,10 @@ async function daily(message){
         }
         else { //user has not logged in
             try {
-                let u = await User.user.find( { userId: message.author.id }, { crystals: 1 });
+                let u = await User.user.find({ userId: message.author.id }, { crystals: 1 });
                 var crys = u[0].crystals;
                 console.log(crys);
-                await User.user.updateOne( { userId: message.author.id }, { $set: { daily: true, crystals: crys + 300 }});
+                await User.user.updateOne({ userId: message.author.id }, { $set: { daily: true, crystals: crys + 300 }});
                 console.log('user checked in');
             } catch (err){
                 console.log(err);

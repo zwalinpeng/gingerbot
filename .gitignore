@@ -1,4 +1,5 @@
 .env
 .DS_Store
 package-lock.json
+ck.json
 node_modules/

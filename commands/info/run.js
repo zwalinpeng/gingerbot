@@ -12,13 +12,12 @@ module.exports = {
 }
 
 async function start(message){
-    //TODO: create start message, init user, start w/ 3000 crystals, check if user already has data
     let embed = new MessageEmbed().setColor('#f0ab22');
     var user = await User.findUser(message.author.id)
         .catch(err => {
             console.log(err);
         });
-    if (user === null){ //TODO: check if user exists in db
+    if (user === null){
         try {
             let user = await User.user.create({
                 userId: `${message.author.id}`,
@@ -26,7 +25,7 @@ async function start(message){
                 pulls: 0,
                 lastCookie: 0,
                 lastEpic: 0,
-                daily: false,
+                daily: false
             });
             await user.save();
             console.log(`${message.author.username} data created`);
