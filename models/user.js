@@ -6,8 +6,11 @@ const userSchema = new mongoose.Schema({
     pulls: Number,
     lastCookie: Number,
     lastEpic: Number,
-    daily: Boolean
-    //TODO: cookies
+    daily: Boolean,
+    cookies: { //k: cookie id, v: ss count
+        type: Map,
+        of: Number
+    }
 });
 
 module.exports = {
@@ -20,11 +23,9 @@ module.exports = {
             console.log(err);
         }
         if (user.length == 0){
-            console.log('no such user')
             return null;
         }
         else {
-            console.log('user found');
             return user[0];
         }
     }

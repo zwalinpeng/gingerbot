@@ -1,5 +1,5 @@
 const { MessageEmbed } = require('discord.js');
-const User = require(process.env.DIR + '/user.js');
+const User = require(process.env.DIR + '/models/user.js');
 
 module.exports = {
     name: 'daily',
