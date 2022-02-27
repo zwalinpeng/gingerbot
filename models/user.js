@@ -6,7 +6,8 @@ const userSchema = new mongoose.Schema({
     pulls: Number,
     lastCookie: Number,
     lastEpic: Number,
-    daily: Boolean,
+    daily: Date,
+    streak: Number,
     cookies: { //k: cookie id, v: ss count
         type: Map,
         of: Number

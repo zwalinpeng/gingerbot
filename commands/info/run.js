@@ -27,7 +27,8 @@ async function start(message){
                 pulls: 0,
                 lastCookie: 0,
                 lastEpic: 0,
-                daily: false,
+                steak: 0,
+                daily: undefined,
                 cookies: new Map()
             });
             await user.save();

@@ -20,14 +20,14 @@ async function daily(message){
         message.reply('Start your kingdom with `!run` to claim daily rewards!');
     }
     else {
-        var logged = false;
+        var logged;
         try {
             let u = await User.user.find({ userId: message.author.id }, { daily : 1 });
             logged = u[0].daily;
         } catch (err){
             console.log(err);
         }
-        if (logged){ //user already logged in
+        if (!newDay(logged)){ //user already logged in
             let embed = new MessageEmbed()
                 .setColor('#f0ab22')
                 .setTitle('Stop!')
@@ -36,12 +36,12 @@ async function daily(message){
             message.reply({ embeds: [embed] });
         }
         else { //user has not logged in
+            var streak = 0;
             try {
-                let u = await User.user.find({ userId: message.author.id }, { crystals: 1 });
+                let u = await User.user.find({ userId: message.author.id }, { crystals: 1, streak: 1 });
                 var crys = u[0].crystals;
-                console.log(crys);
-                await User.user.updateOne({ userId: message.author.id }, { $set: { daily: true, crystals: crys + 300 }});
-                console.log('user checked in');
+                if (nextDay(logged)) streak = u[0].streak + 1;
+                await User.user.updateOne({ userId: message.author.id }, { $set: { daily: new Date(), crystals: crys + 300, streak: streak }});
             } catch (err){
                 console.log(err);
             }
@@ -53,4 +53,24 @@ async function daily(message){
             message.reply({ embeds: [embed] });
         }
     }
+}
+
+function newDay(lastLog){
+    let today = new Date();
+    if (lastLog === undefined || lastLog.getFullYear() < today.getFullYear() || lastLog.getMonth() < today.getMonth()){
+        return true;
+    }
+    else if (lastLog.getMonth() == today.getMonth() && lastLog.getDate() < today.getDate()){
+        return true;
+    }
+    return false;
+}
+
+function nextDay(lastLog){
+    let today = newDate();
+    if (lastLog === undefined){
+        return true;
+    }
+    let next = new Date(lastLog.getFullYear(), lastLog.getMonth(), lastLog.getDate() + 1);
+    return (today.getFullYear() == next.getFullYear() && today.getMonth() == next.getMonth() && today.getDate() == next.getDate());
 }
