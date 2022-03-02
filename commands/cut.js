@@ -1,23 +1,14 @@
 const Discord = require('discord.js');
 const { MessageAttachment, MessageEmbed } = require('discord.js');
-const cookie = require(process.env.DIR + '/cookies.js');
-const User = require(process.env.DIR + '/models/user.js');
+const path = require('path');
+const User = require(path.join(__dirname, '../models/user.js')); 
+const Cookie = require(path.join(__dirname, '../models/cookie.js'));
 
 module.exports = {
     name: 'cut',
-    category: 'gacha',
     permissions: [],
     devOnly: false,
     run: async ({bot, message, args}) => {
-        //check for user
-        let user = await User.findUser(message.author.id)
-        .catch(err => {
-            console.log(err);
-        });
-        if (user === null){
-            message.reply('Start your kingdom with `!run` to claim daily rewards!');
-            return;
-        }
         user = await User.user.find({ userId: message.author.id }, { crystals: 1, pulls: 1 })
         .catch(err => {
             console.log(err);
@@ -54,22 +45,22 @@ async function cut(message){
     //pity epic
     if (user[0].lastEpic + 100 == user[0].pull){
         ss = false;
-        let c = Math.round(Math.random()*cookie.epic.length);
+        let c = Math.floor(Math.random()*Cookie.epic.length);
         await User.user.updateOne({ userId: message.author.id }, { $set: { lastEpic: user[0].pulls }});
-        pull = cookie.epic[c];
+        pull = await Cookie.cookie.find({ id: Cookie.epic[c] });
     }
     else{
         if (rng < rates.common){ //ss prob = 32.186
             embed.setColor('#e3b68f');
             ss = rng < 32.186; //determines whether user pulled soulstone or cookie
-            let c = Math.round(Math.random()*cookie.common.length); //index of cookie
-            pull = cookie.common[c]; 
+            let c = Math.floor(Math.random()*Cookie.common.length); //index of cookie
+            pull = await Cookie.cookie.find({ id: Cookie.common[c] }); 
         }
         else if (rng < rates.rare){ //ss prob = 32.186
             embed.setColor('#279af2');
             ss = rng < 73.983;
-            let c = Math.round(Math.random()*cookie.rare.length); //index of cookie
-            pull = cookie.rare[c];
+            let c = Math.floor(Math.random()*Cookie.rare.length); //index of cookie
+            pull = await Cookie.cookie.find({ id: Cookie.rare[c] });
         }
         else if (rng < rates.epic){ //ss prob = 16.419
             embed.setColor('#f53897');
@@ -77,49 +68,51 @@ async function cut(message){
             if (!ss){
                 await User.user.updateOne({ userId: message.author.id }, { $set: { lastEpic: user[0].pulls }});
             }
-            let c = Math.round(Math.random()*cookie.epic.length); //index of cookie
-            pull = cookie.epic[c];
+            let c = Math.floor(Math.random()*Cookie.epic.length); //index of cookie
+            pull = await Cookie.cookie.find({ id: Cookie.epic[c] });
         }
         else if (rng < rates.legendary){ //ss prob = 0.616
             embed.setColor('#6afce6');
             ss = rng < 99.196
-            let c = Math.round(Math.random()*cookie.legend.length); //index of cookie
-            pull = cookie.legend[c];
+            let c = Math.floor(Math.random()*Cookie.legend.length); //index of cookie
+            pull = await Cookie.cookie.find({ id: Cookie.legend[c] });
         }
         else if (rng < rates.ancient){ //ss prob = 0.616
             embed.setColor('#6532d1')
             ss = rng < 99.920
-            let c = Math.round(Math.random()*cookie.ancient.length); //index of cookie
-            pull = cookie.ancient[c];
+            let c = Math.floor(Math.random()*Cookie.ancient.length); //index of cookie
+            pull = await Cookie.cookie.find({ id: Cookie.ancient[c] });
         }
         //pity cookie
         if (user[0].lastCookie + 10 == user[0].pull){
             ss = false;
         }
     }
+    console.log(pull);
     let gain = 0;
     if (ss){
         let count = Math.round(Math.random()*2) + 1;
         gain = count;
         if (rng >= rates.legendary) { count = 1; }
-        embed.setTitle(`${pull.name} Soulstone x${count}`);
-        embed.setImage(pull.ss);
+        embed.setTitle(`${pull[0].name} Soulstone x${count}`);
+        embed.setImage(pull[0].ss);
     } 
     else {
         gain = 20;
         await User.user.updateOne({ userId: message.author.id }, { $set: { lastCookie: user[0].pulls }});
-        embed.setTitle(pull.name);
-        embed.setDescription(pull.phrase);
-        embed.setImage(pull.pull);
+        embed.setTitle(pull[0].name);
+        embed.setDescription(pull[0].phrase);
+        embed.setImage(pull[0].pull);
     }
     //give ss
     let list = user[0].cookies;
+    console.log(pull);
     //check if user has cookie
-    if (user[0].cookies.has(cookie)){
-        list.set(pull.id, user[0].cookies.get(pull.id) + gain);
+    if (user[0].cookies.has(Cookie)){
+        list.set(pull[0].id, user[0].cookies.get(pull[0].id) + gain);
     }
     else {
-        list.set(pull.id, gain);
+        list.set(pull[0].id, gain);
     }
     await User.user.updateOne({ userId: message.author.id }, { $set: { cookies: list }});
     message.reply({ embeds: [embed] });

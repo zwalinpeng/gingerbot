@@ -1,4 +1,7 @@
 const Discord = require('discord.js');
+const mongoose = require('mongoose');
+const path = require('path');
+const User = require(path.join(__dirname, '../models/user.js'));
  
 module.exports = {
     name: 'messageCreate',
@@ -25,6 +28,13 @@ module.exports = {
         }
 
         try{
+            if (command.name != 'run'){
+                let user = await User.user.find({ userId: message.author.id });
+                if (user.length == 0){
+                    message.reply('Start your kingdom with `!run` to check your profile!');
+                    return;
+                }
+            }   
             await command.run({...bot, message, args});
         }
         catch (err){

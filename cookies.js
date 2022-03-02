@@ -219,14 +219,6 @@ module.exports = {
             phrase: "I hope this light will reach all corners of this land..."
         },
         {
-            id: "cpf",
-            name: "Cream Puff Cookie",
-            ss: "",
-            pull: "",
-            icon: "",
-            phrase: ""
-        },
-        {
             id: "dch",
             name: "Dark Choco Cookie",
             ss: "https://i.imgur.com/04todmC.png",

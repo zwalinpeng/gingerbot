@@ -16,18 +16,4 @@ const userSchema = new mongoose.Schema({
 
 module.exports = {
     user: mongoose.model('User', userSchema),
-    findUser: async function(userId){
-        var user;
-        try{
-            user = await mongoose.model('User', userSchema).find({ userId: userId });
-        } catch (err) {
-            console.log(err);
-        }
-        if (user.length == 0){
-            return null;
-        }
-        else {
-            return user[0];
-        }
-    }
 };

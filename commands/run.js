@@ -1,9 +1,9 @@
 const { MessageEmbed } = require('discord.js');
-const User = require(process.env.DIR + '/models/user.js');
+const path = require('path');
+const User = require(path.join(__dirname, '../models/user.js')); 
 
 module.exports = {
     name: 'run',
-    category: 'info',
     permissions: [],
     devOnly: false,
     run: async ({bot, message, args}) => {
@@ -15,11 +15,11 @@ async function start(message){
     let embed = new MessageEmbed()
         .setColor('#f0ab22')
         .setThumbnail(message.author.avatarURL());
-    var user = await User.findUser(message.author.id)
+    var user = await User.user.find({ userId: message.author.id })
         .catch(err => {
             console.log(err);
         });
-    if (user === null){
+    if (user.length == 0){
         try {
             let user = await User.user.create({
                 userId: `${message.author.id}`,
@@ -27,7 +27,7 @@ async function start(message){
                 pulls: 0,
                 lastCookie: 0,
                 lastEpic: 0,
-                steak: 0,
+                streak: 0,
                 daily: undefined,
                 cookies: new Map()
             });

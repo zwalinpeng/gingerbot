@@ -5,13 +5,13 @@ module.exports = (bot, reload) => {
     const {client} = bot;
 
     fs.readdirSync('./commands/').forEach((category) => {
-        let commands = getFiles(`./commands/${category}`, '.js');
+        let commands = getFiles(`./commands`, '.js');
 
         commands.forEach((f) => {
             if (reload){
-                delete require.cache[require.resolve(`../commands/${category}/${f}`)];
+                delete require.cache[require.resolve(`../commands/${f}`)];
             }
-            const command = require(`../commands/${category}/${f}`);
+            const command = require(`../commands/${f}`);
             client.commands.set(command.name, command);
         });
 
