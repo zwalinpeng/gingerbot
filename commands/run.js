@@ -37,7 +37,7 @@ async function start(message){
             console.log(err);
         }
          embed.setTitle(`Welcome ${message.author.username}!`)
-         .setDescription('You got :gem: x3000! Use `!cut` or `!cut10` to summon your first cookie!');
+         .setDescription('You got :gem: x3000! Use `!cut` to summon your first cookie!');
          message.reply({embeds: [embed]});
     }
     else {

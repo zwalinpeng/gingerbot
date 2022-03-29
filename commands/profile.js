@@ -33,7 +33,7 @@ module.exports = {
 async function displayCookies(cookies){
     //TODO: fix font
     //Canvas.registerFont(path.join(__dirname, '../cookieRun.ttf'), { family: 'sans-serif'});
-    let canvas = Canvas.createCanvas(800, 150*(cookies.size/4) + 50);
+    let canvas = Canvas.createCanvas(800, 150*Math.ceil(cookies.size/4) + 50);
     let ctx = canvas.getContext('2d');
     ctx.font = 'bold 30px sans-serif';
     ctx.fillStyle = '#ffffff';
@@ -42,7 +42,6 @@ async function displayCookies(cookies){
     let col = 0;
     let row = 0;
     for (let [id, ss] of cookies){
-        console.log(col + ' ' + row);
         if (ss < 20){
             let ck = await Cookie.cookie.find({ id: id }, { ss: 1 });
             let image = await Canvas.loadImage(ck[0].ss);
@@ -50,8 +49,8 @@ async function displayCookies(cookies){
 
         }
         else {
-            let ck = await Cookie.cookie.find({ id: id }, { icon: 1 });
-            let image = await Canvas.loadImage(ck[0].icon);
+            let ck = await Cookie.cookie.find({ id: id }, { card: 1 });
+            let image = await Canvas.loadImage(ck[0].card);
             ctx.drawImage(image, 150 * col, 50 + (row*150), 150, 150);
         }
         if (col == 4){
@@ -66,3 +65,7 @@ async function displayCookies(cookies){
     return attachment;
 }
 
+//TODO: puts cookies in display order
+function orderCookies(cookies){
+
+}

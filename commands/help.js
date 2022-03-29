@@ -16,7 +16,9 @@ function help(message){
         .setTitle('GingerBot')
         .addFields(
             { name: 'Welcome!', value: 'Use `!run` to start your kingdom!'},
-            { name: 'Gacha', value: '`!cut`: Summon one time\n`!daily`: Claim daily rewards' },
+            { name: 'Gacha', value: '`!cut`  Summon 1 time\n' +
+                '`!cut <n>`  Summon n times\n' + //:arrow_right: to next summon :track_next: to skip to end\n' +
+                '`!daily`  Claim daily rewards' },
         );
         message.reply({ embeds: [embed] });
 }

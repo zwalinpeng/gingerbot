@@ -28,13 +28,13 @@ module.exports = {
         }
 
         try{
-            if (command.name != 'run'){
+            if (command.name != 'run' && command.name != 'help'){
                 let user = await User.user.find({ userId: message.author.id });
                 if (user.length == 0){
-                    message.reply('Start your kingdom with `!run` to check your profile!');
+                    message.reply('Start your kingdom with `!run` to use other commands');
                     return;
                 }
-            }   
+            }
             await command.run({...bot, message, args});
         }
         catch (err){

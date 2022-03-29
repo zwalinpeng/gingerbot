@@ -28,11 +28,11 @@ async function daily(message){
         message.reply({ embeds: [embed] });
     }
     else { //user has not logged in
-        var streak = 0;
         try {
             let u = await User.user.find({ userId: message.author.id }, { crystals: 1, streak: 1 });
             var crys = u[0].crystals;
-            if (nextDay(logged)) streak = u[0].streak + 1;
+            if (nextDay(logged)) { streak = u[0].streak + 1; }
+            else { streak = 1 ;}
             await User.user.updateOne({ userId: message.author.id }, { $set: { daily: new Date(), crystals: crys + 300, streak: streak }});
         } catch (err){
             console.log(err);
