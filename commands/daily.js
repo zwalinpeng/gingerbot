@@ -29,11 +29,13 @@ async function daily(message){
     }
     else { //user has not logged in
         try {
-            let u = await User.user.find({ userId: message.author.id }, { crystals: 1, streak: 1 });
-            var crys = u[0].crystals;
-            if (nextDay(logged)) { streak = u[0].streak + 1; }
+            let u = await User.user.find({ userId: message.author.id }, { streak: 1 });
+            if (!brokeStreak(logged)) { streak = u[0].streak + 1; }
             else { streak = 1 ;}
-            await User.user.updateOne({ userId: message.author.id }, { $set: { daily: new Date(), crystals: crys + 300, streak: streak }});
+            await User.user.updateOne({ userId: message.author.id },{
+                $set: { daily: new Date(), streak: streak },
+                $inc: { crystals: 300 }
+            });
         } catch (err){
             console.log(err);
         }
@@ -47,22 +49,24 @@ async function daily(message){
     
 }
 
+//returns true if it has been more than 24 hrs since lastLog
 function newDay(lastLog){
-    let today = new Date();
-    if (lastLog === undefined || lastLog.getFullYear() < today.getFullYear() || lastLog.getMonth() < today.getMonth()){
-        return true;
-    }
-    else if (lastLog.getMonth() == today.getMonth() && lastLog.getDate() < today.getDate()){
-        return true;
-    }
-    return false;
-}
-
-function nextDay(lastLog){
-    let today = new Date();
     if (lastLog === undefined){
         return true;
     }
-    let next = new Date(lastLog.getFullYear(), lastLog.getMonth(), lastLog.getDate() + 1);
-    return (today.getFullYear() == next.getFullYear() && today.getMonth() == next.getMonth() && today.getDate() == next.getDate());
+    let hour = 1000 * 60 * 60;
+    let end = Date.now() - 24*hour;
+    return lastLog > end;
 }
+
+//returns true if lastLog is within 24 hrs
+function brokeStreak(lastLog){
+    if (lastLog === undefined){
+        return true;
+    }
+    let hour = 1000 * 60 * 60;
+    let end = lastLog + 24*hour;
+    let today = new Date();
+    return today > end;
+}
+

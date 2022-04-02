@@ -9,7 +9,11 @@ module.exports = {
     permissions: [],
     devOnly: false,
     run: async ({bot, message, args}) => {
-        let user = await User.user.find({ userId: message.author.id }, { crystals: 1, pulls: 1, streak: 1, cookies: 1 });
+        let user = await User.user.find({ userId: message.author.id }, { crystals: 1, daily: 1, pulls: 1, streak: 1, cookies: 1 });
+        //check if streak was more than one day ago
+        if (brokeStreak(user[0].daily)){
+            await User.user.updateOne({ userId: message.author.id }, { $set: { streak: 0 }});
+        }
         let embed = new MessageEmbed()
             .setTitle(`${message.author.username}'s Kingdom`)
             .setThumbnail(message.author.avatarURL())
@@ -18,7 +22,7 @@ module.exports = {
                 { name: 'Crystals', value: `:gem: ${user[0].crystals}`, inline: true },
                 { name: 'Pulls', value: `:woman_mage: ${user[0].pulls}`, inline: true },
                 { name: 'Daily Streak', value: `:date: ${user[0].streak}`, inline: true });
-        if (user[0].cookies != undefined){
+        if (user[0].cookies.size != 0){
             const attachment = await displayCookies(user[0].cookies);
             embed.setImage('attachment://cookieList.png');
             message.reply({ embeds: [embed], files: [attachment] });
@@ -26,7 +30,7 @@ module.exports = {
         }
         message.reply({ embeds: [embed] });
     }
-}
+};
 
 //TODO: sort by rarity + cookie/ss ?
 //create image that displays user cookies
@@ -68,4 +72,15 @@ async function displayCookies(cookies){
 //TODO: puts cookies in display order
 function orderCookies(cookies){
 
+}
+
+//returns true if lastLog is within 24 hrs
+function brokeStreak(lastLog){
+    if (lastLog === undefined){
+        return true;
+    }
+    let hour = 1000 * 60 * 60;
+    let end = lastLog + 24*hour;
+    let today = new Date();
+    return today > end;
 }
