@@ -56,7 +56,7 @@ function newDay(lastLog){
     }
     let hour = 1000 * 60 * 60;
     let end = Date.now() - 24*hour;
-    return lastLog > end;
+    return lastLog < end;
 }
 
 //returns true if lastLog is within 24 hrs
