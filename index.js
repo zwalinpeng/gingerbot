@@ -5,10 +5,10 @@ const mongoose = require('mongoose');
 const client = new Discord.Client({
     intents: [
         'GUILDS',
-        'GUILD_MESSAGES'
+        'GUILD_MESSAGES',
+        'GUILD_MESSAGE_REACTIONS'
     ] 
 });
-
 
 let bot = {
     client,
@@ -33,7 +33,6 @@ module.exports = bot;
 
 mongoose.connect('mongodb://localhost/gingerdb', () => {
     console.log('Connected to MongoDB');
-}, err => console.log(err)
-);
+}, err => console.log(err));
 
 client.login(process.env.TOKEN);

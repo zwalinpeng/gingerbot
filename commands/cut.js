@@ -3,119 +3,232 @@ const { MessageAttachment, MessageEmbed } = require('discord.js');
 const path = require('path');
 const User = require(path.join(__dirname, '../models/user.js')); 
 const Cookie = require(path.join(__dirname, '../models/cookie.js'));
+const Canvas = require('canvas');
+const { listenerCount } = require('process');
 
 module.exports = {
     name: 'cut',
     permissions: [],
     devOnly: false,
     run: async ({bot, message, args}) => {
-        user = await User.user.find({ userId: message.author.id }, { crystals: 1, pulls: 1 })
+        let count = 1; 
+        //check args
+        if (args.length >= 1){
+            if (parseInt(args[0]) == NaN || args.length > 1){
+                message.reply('Please enter a valid command');
+                return;
+            }
+            count = parseInt(args[0]);
+            if (count <= 0){
+                message.reply('lolz :zany_face:')
+                return;
+            }
+        }
+        //get user info
+        let user = await User.user.find({ userId: message.author.id }, { crystals: 1, pulls: 1, lastCookie: 1, lastEpic: 1 })
         .catch(err => {
             console.log(err);
         });
         //check for sufficient crystals
-        if (user[0].crystals < 300){
+        if (user[0].crystals < 300*count){
             let embed = new MessageEmbed()
                 .setColor('#f0ab22')
                 .setTitle(`Sorry, ${message.author.username} ...`)
-                .setDescription(`:gem: ${user[0].crystals} is not enough to summon`);
+                .setDescription(`:gem: ${user[0].crystals} is not enough to summon ${count} times`);
             message.reply({ embeds: [embed] });
+            return;
         }
+        //start summon
         else {
-            await User.user.updateOne({ userId: message.author.id }, { $set: {
-                crystals: user[0].crystals - 300,
-                pulls: user[0].pulls + 1
-            }});
-            cut(message);
+            let pity = {
+                pull: user[0].pulls,
+                cookie: user[0].lastCookie,
+                epic: user[0].lastEpic
+            }
+            await cut(message, count, pity);
         }
     }
 };
 
+//TODO: finish skip option
+//TODO: add quit option
+//returns true for next, false for skip
+async function cut(message, count, pity, reply, results){
+    if (count == 0){
+        console.log("done!");
+        await reply.reactions.removeAll();
+        reply.edit({ embeds: [displayResults(results)] });
+        return;
+    }
+    //pull
+    pity.pull++;
+    let summon = await getCookie((pity.cookie + 10 == pity.pull), (pity.epic + 100 == pity.pull));
+    await updateInv(message.author.id, summon);
+    pity = await updatePity(summon, pity, message.author.id);
+    //display result
+    let embed = getEmbed(summon.cookie, summon.count);
+    if (reply === undefined){ //make new reply
+        reply = await message.reply({ embeds: [embed], fetchReply: true });
+    }
+    else { //edit reply
+        reply.edit({ embeds: [embed] });
+    }
+    //no reaction if single pull
+    if (count == 1 && results === undefined){
+        console.log("bye");
+        return;
+    }
+    //make results array if undefined
+    if (results === undefined){
+        results = new Array(summon);
+    }
+    else {
+        results.push(summon);
+    }
+    await reply.reactions.removeAll();
+    await reply.react('➡️');
+    //await reply.react('⏭️');
+    //wait for user reaction
+    const filter = (reaction, user) => {
+        return ['➡️', '⏭️'].includes(reaction.emoji.name) && user.id === message.author.id;
+    }
+     reply.awaitReactions({filter, max: 1, time: 30000, errors: ['time']})
+        .then(collected => {
+            let reaction = collected.first().emoji.name;
+            if (reaction === '➡️'){
+                console.log('next!');
+                cut(message, count - 1, pity, reply, results);
+            }
+        })
+        .catch(collected => {
+            message.reply('Session timed out... showing results');
 
-async function cut(message){
-    var embed = new MessageEmbed(); 
-    //find user
-    let user = await User.user.find({ userId: message.author.id }, { cookies: 1, lastCookie: 1, lastEpic: 1, pull: 1 })
-    .catch(err => {
-        console.log(err);
-    });
-    let rng = Math.random()*100;
-    let pull;
-    let ss;
+        }); 
+}
+
+//adds summon to user data
+async function updateInv(userId, summon){
+    let user = await User.user.find({ userId: userId }, { cookies: 1 });
+    let inv = user[0].cookies;
+    if (inv.has(summon.cookie.id)){
+        inv.set(summon.cookie.id, inv.get(summon.cookie.id) + summon.count);
+    }
+    else {
+        inv.set(summon.cookie.id, summon.count);
+    }
+    await User.user.updateOne({ userId: userId }, { cookies: inv });
+}
+
+//updates reply with next pull
+async function nextCookie(pity, reply){
+    //get summon
+    let summon = await getCookie((pity.cookie + 10 == pity.pull), (pity.epic + 100 == pity.pull));
+    pity = await updatePity(summon, pity, reply.mentions.repliedUser.id);
+    //display result
+    let embed = getEmbed(summon.cookie, summon.count);
+    reply.edit({ embeds: [embed] });
+}
+
+//updates user pity
+async function updatePity(summon, pity, userId){
+    //update pity
+    if (summon.count == 20){
+        pity.cookie = pity.pull;
+        if (summon.cookie.rarity == 3){
+            pity.epic = pity.pull;
+        }
+    }
+    //update user data
+    await User.user.updateOne({ userId: userId }, { $set: {
+        pulls: pity.pull,
+        lastCookie: pity.cookie,
+        lastEpic: pity.epic
+    }, $inc: {
+        crystals: -300
+    }});
+    return pity;
+}
+
+//returns Object { cookie: Object, count: Number }
+async function getCookie(cookiePity, epicPity){
+    let pull = {
+        count: 0 //20 for cookie
+    };
+    let id;
     //pity epic
-    if (user[0].lastEpic + 100 == user[0].pull){
-        ss = false;
+    if (epicPity){
         let c = Math.floor(Math.random()*Cookie.epic.length);
-        await User.user.updateOne({ userId: message.author.id }, { $set: { lastEpic: user[0].pulls }});
-        pull = await Cookie.cookie.find({ id: Cookie.epic[c] });
+        id = Cookie.epic[c];
+        pull.count = 20;
+        return pull;
     }
     else{
+        //pity cookie
+        let rng = Math.random()*100;
         if (rng < rates.common){ //ss prob = 32.186
-            embed.setColor('#e3b68f');
-            ss = rng < 32.186; //determines whether user pulled soulstone or cookie
             let c = Math.floor(Math.random()*Cookie.common.length); //index of cookie
-            pull = await Cookie.cookie.find({ id: Cookie.common[c] }); 
+            pull.count = rng < 32.186? Math.round(Math.random()*2) + 1 : 20; //determines whether user pulled soulstone or cookie
+            id = Cookie.common[c]; 
         }
         else if (rng < rates.rare){ //ss prob = 32.186
-            embed.setColor('#279af2');
-            ss = rng < 73.983;
             let c = Math.floor(Math.random()*Cookie.rare.length); //index of cookie
-            pull = await Cookie.cookie.find({ id: Cookie.rare[c] });
+            pull.count = rng < 73.983? Math.round(Math.random()*2) + 1 : 20;
+            id = Cookie.rare[c];
         }
         else if (rng < rates.epic){ //ss prob = 16.419
-            embed.setColor('#f53897');
-            ss = rng < 95.694;
-            if (!ss){
-                await User.user.updateOne({ userId: message.author.id }, { $set: { lastEpic: user[0].pulls }});
-            }
             let c = Math.floor(Math.random()*Cookie.epic.length); //index of cookie
-            pull = await Cookie.cookie.find({ id: Cookie.epic[c] });
+            pull.count = rng < 95.694? Math.round(Math.random()*2) + 1 : 20;
+            id = Cookie.epic[c];
         }
         else if (rng < rates.legendary){ //ss prob = 0.616
-            embed.setColor('#6afce6');
-            ss = rng < 99.196
             let c = Math.floor(Math.random()*Cookie.legend.length); //index of cookie
-            pull = await Cookie.cookie.find({ id: Cookie.legend[c] });
+            pull.count = rng < 99.196? 1 : 20;
+            id = Cookie.legend[c];
         }
         else if (rng < rates.ancient){ //ss prob = 0.616
-            embed.setColor('#6532d1')
-            ss = rng < 99.920
             let c = Math.floor(Math.random()*Cookie.ancient.length); //index of cookie
-            pull = await Cookie.cookie.find({ id: Cookie.ancient[c] });
+            pull.count = rng < 99.920? 1 : 20;
+            id = Cookie.ancient[c];
         }
-        //pity cookie
-        if (user[0].lastCookie + 10 == user[0].pull){
-            ss = false;
+        if (cookiePity){
+            pull.count = 20;
         }
     }
-    console.log(pull);
-    let gain = 0;
-    if (ss){
-        let count = Math.round(Math.random()*2) + 1;
-        gain = count;
-        if (rng >= rates.legendary) { count = 1; }
-        embed.setTitle(`${pull[0].name} Soulstone x${count}`);
-        embed.setImage(pull[0].ss);
-    } 
-    else {
-        gain = 20;
-        await User.user.updateOne({ userId: message.author.id }, { $set: { lastCookie: user[0].pulls }});
-        embed.setTitle(pull[0].name);
-        embed.setDescription(pull[0].phrase);
-        embed.setImage(pull[0].pull);
-    }
-    //give ss
-    let list = user[0].cookies;
-    console.log(pull);
-    //check if user has cookie
-    if (user[0].cookies.has(Cookie)){
-        list.set(pull[0].id, user[0].cookies.get(pull[0].id) + gain);
+    let query = await Cookie.cookie.find({ id: id });
+    pull.cookie = query[0];
+    return pull;
+}
+
+//takes cookie: Object and count: Number
+function getEmbed(cookie, count){ 
+    const embed = new MessageEmbed();
+    let image;
+    if (count == 20){
+        embed.setImage(cookie.pull);
+        embed.setTitle(cookie.name);
+        embed.setDescription(cookie.phrase);
     }
     else {
-        list.set(pull[0].id, gain);
+        embed.setImage(cookie.ss);
+        embed.setTitle(`${cookie.name} Soulstone x${count}`);
     }
-    await User.user.updateOne({ userId: message.author.id }, { $set: { cookies: list }});
-    message.reply({ embeds: [embed] });
+    //set embed color according to rarity
+    if (cookie.rarity == 1) { embed.setColor('#e3b68f'); }
+    else if (cookie.rarity == 2) { embed.setColor('#279af2'); }
+    else if (cookie.rarity == 3) { embed.setColor('#f53897'); }
+    else if (cookie.rarity == 4) { embed.setColor('#6afce6'); }
+    else if (cookie.rarity == 5) { embed.setColor('#6532d1'); }
+    return embed;
+}
+
+//TODO: display summon results
+//takes array of objects { count: Number, cookie: Object }
+function displayResults(results){
+    let canvas = Canvas.createCanvas(800, 150*Math.ceil(results.size/5) + 50);
+    let ctx = canvas.getContext('2d');
+    ctx.font = 'bold 30px sans-serif';
+    ctx.fillStyle = '#ffffff';
+    return new MessageEmbed().setTitle("your results here");
 }
 
 const rates = {
