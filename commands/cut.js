@@ -56,9 +56,13 @@ module.exports = {
 //returns true for next, false for skip
 async function cut(message, count, pity, reply, results){
     if (count == 0){
-        console.log("done!");
         await reply.reactions.removeAll();
-        reply.edit({ embeds: [displayResults(results)] });
+        let embed = new MessageEmbed()
+            .setColor('#f0ab22')
+            .setTitle("Results");
+        let attachment = await displayResults(results);
+        embed.setImage('attachment://results.png');
+        reply.edit({ embeds: [embed], files: [attachment] });
         return;
     }
     //pull
@@ -76,7 +80,6 @@ async function cut(message, count, pity, reply, results){
     }
     //no reaction if single pull
     if (count == 1 && results === undefined){
-        console.log("bye");
         return;
     }
     //make results array if undefined
@@ -97,7 +100,6 @@ async function cut(message, count, pity, reply, results){
         .then(collected => {
             let reaction = collected.first().emoji.name;
             if (reaction === '➡️'){
-                console.log('next!');
                 cut(message, count - 1, pity, reply, results);
             }
         })
@@ -120,31 +122,17 @@ async function updateInv(userId, summon){
     let found = false;
     for (let i = 0; i < arr.length; i++){
         if (arr[i].id === summon.cookie.id){
-            console.log("hi");
             arr[i].ss += summon.count;
             found = true;
             break;
         }
     }
     if (!found){
-        console.log(typeof arr);
         arr.push({ id: summon.cookie.id, ss: summon.count });
+        inv.size++;
     }
-    console.log(arr);
     arr.sort((a, b) => (a.ss > b.ss) ? 1 : (a.ss === b.ss) ? ((a.id > b.id) ? 1 : -1) : -1);
-    console.log(arr);
-    inv.size++;
     await User.user.updateOne({ userId: userId }, { $set: { cookies: inv }});
-}
-
-//updates reply with next pull
-async function nextCookie(pity, reply){
-    //get summon
-    let summon = await getCookie((pity.cookie + 10 == pity.pull), (pity.epic + 100 == pity.pull));
-    pity = await updatePity(summon, pity, reply.mentions.repliedUser.id);
-    //display result
-    let embed = getEmbed(summon.cookie, summon.count);
-    reply.edit({ embeds: [embed] });
 }
 
 //updates user pity
@@ -239,14 +227,32 @@ function getEmbed(cookie, count){
     return embed;
 }
 
-//TODO: display summon results
 //takes array of objects { count: Number, cookie: Object }
-function displayResults(results){
-    let canvas = Canvas.createCanvas(800, 150*Math.ceil(results.size/5) + 50);
+async function displayResults(results){
+    let x = results.length <= 5? results.length*150 : 750;
+    let canvas = Canvas.createCanvas(x, 150*Math.ceil(results.length/5));
     let ctx = canvas.getContext('2d');
-    ctx.font = 'bold 30px sans-serif';
-    ctx.fillStyle = '#ffffff';
-    return new MessageEmbed().setTitle("your results here");
+    let row = 0;
+    let col = 0;
+    for (let i = 0; i < results.length; i++){
+        if (results[i].count < 20){
+            let image = await Canvas.loadImage(results[i].cookie.ss);
+            ctx.drawImage(image, 150 * col, (row*150), 150, 150);
+        }
+        else {
+            let image = await Canvas.loadImage(results[i].cookie.card);
+            ctx.drawImage(image, 150 * col, (row*150), 150, 150);
+        }
+        if (col == 4){
+            col = 0;
+            row++;
+        }
+        else{
+            col++;
+        }
+    }
+    let attachment = new MessageAttachment(canvas.toBuffer(), 'results.png');
+    return attachment;
 }
 
 const rates = {
