@@ -45,12 +45,23 @@ async function displayCookies(cookies){
     //TODO: dx dy for images
     let col = 0;
     let row = 0;
-    for (let [id, ss] of cookies){
+    let cont = await addRarity(cookies.common, col, row, ctx);
+    cont = await addRarity(cookies.rare, cont.col, cont.row, ctx);
+    cont = await addRarity(cookies.epic, cont.col, cont.row, ctx);
+    cont = await addRarity(cookies.legend, cont.col, cont.row, ctx);
+    cont = await addRarity(cookies.ancient, cont.col, cont.row, ctx);
+    let attachment = new MessageAttachment(canvas.toBuffer(), 'cookieList.png');
+    return attachment;
+}
+
+async function addRarity(arr, col, row, ctx){
+    for (let i = 0; i < arr.length; i++){
+        ss = arr[i].ss;
+        id = arr[i].id;
         if (ss < 20){
             let ck = await Cookie.cookie.find({ id: id }, { ss: 1 });
             let image = await Canvas.loadImage(ck[0].ss);
             ctx.drawImage(image, 150 * col, 50 + (row*150), 150, 150);
-
         }
         else {
             let ck = await Cookie.cookie.find({ id: id }, { card: 1 });
@@ -65,13 +76,7 @@ async function displayCookies(cookies){
             col++;
         }
     }
-    let attachment = new MessageAttachment(canvas.toBuffer(), 'cookieList.png');
-    return attachment;
-}
-
-//TODO: puts cookies in display order
-function orderCookies(cookies){
-
+    return { col: col, row: row };
 }
 
 //returns true if lastLog is within 24 hrs

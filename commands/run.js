@@ -29,7 +29,14 @@ async function start(message){
                 lastEpic: 0,
                 streak: 0,
                 daily: undefined,
-                cookies: new Map()
+                cookies: {
+                    common: [],
+                    rare: [],
+                    epic: [],
+                    legend: [],
+                    ancient: [],
+                    size: 0
+                }
             });
             await user.save();
             console.log(`${message.author.username} data created`);

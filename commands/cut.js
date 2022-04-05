@@ -5,6 +5,7 @@ const User = require(path.join(__dirname, '../models/user.js'));
 const Cookie = require(path.join(__dirname, '../models/cookie.js'));
 const Canvas = require('canvas');
 const { listenerCount } = require('process');
+const { isDataView } = require('util/types');
 
 module.exports = {
     name: 'cut',
@@ -110,13 +111,30 @@ async function cut(message, count, pity, reply, results){
 async function updateInv(userId, summon){
     let user = await User.user.find({ userId: userId }, { cookies: 1 });
     let inv = user[0].cookies;
-    if (inv.has(summon.cookie.id)){
-        inv.set(summon.cookie.id, inv.get(summon.cookie.id) + summon.count);
+    let arr;
+    if (summon.cookie.rarity == 1) { arr = inv.common; }
+    else if (summon.cookie.rarity == 2) { arr = inv.rare; }
+    else if (summon.cookie.rarity == 3) { arr = inv.epic; }
+    else if (summon.cookie.rarity == 4) { arr = inv.legend; }
+    else if (summon.cookie.rarity == 5) { arr = inv.ancient; }
+    let found = false;
+    for (let i = 0; i < arr.length; i++){
+        if (arr[i].id === summon.cookie.id){
+            console.log("hi");
+            arr[i].ss += summon.count;
+            found = true;
+            break;
+        }
     }
-    else {
-        inv.set(summon.cookie.id, summon.count);
+    if (!found){
+        console.log(typeof arr);
+        arr.push({ id: summon.cookie.id, ss: summon.count });
     }
-    await User.user.updateOne({ userId: userId }, { cookies: inv });
+    console.log(arr);
+    arr.sort((a, b) => (a.ss > b.ss) ? 1 : (a.ss === b.ss) ? ((a.id > b.id) ? 1 : -1) : -1);
+    console.log(arr);
+    inv.size++;
+    await User.user.updateOne({ userId: userId }, { $set: { cookies: inv }});
 }
 
 //updates reply with next pull
