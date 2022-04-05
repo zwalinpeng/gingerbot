@@ -37,7 +37,7 @@ module.exports = {
 async function displayCookies(cookies){
     //TODO: fix font
     //Canvas.registerFont(path.join(__dirname, '../cookieRun.ttf'), { family: 'sans-serif'});
-    let canvas = Canvas.createCanvas(800, 150*Math.ceil(cookies.size/4) + 50);
+    let canvas = Canvas.createCanvas(800, 150*Math.ceil(cookies.size/5) + 50);
     let ctx = canvas.getContext('2d');
     ctx.font = 'bold 30px sans-serif';
     ctx.fillStyle = '#ffffff';
